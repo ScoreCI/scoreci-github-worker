@@ -26,7 +26,7 @@ set -ex
 
 ZONE=us-central1-f
 INSTANCE_NAME=scoreci-github-worker
-MACHINE_TYPE=n1-standard-1
+MACHINE_TYPE=f1-micro
 IMAGE_FAMILY=debian-8
 IMAGE_PROJECT=debian-cloud
 STARTUP_SCRIPT=startup-script.sh

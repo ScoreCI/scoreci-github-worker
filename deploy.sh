@@ -28,7 +28,7 @@ ZONE=us-central1-f
 
 GROUP=scoreci-github-worker-group
 TEMPLATE=$GROUP-tmpl
-MACHINE_TYPE=n1-standard-1
+MACHINE_TYPE=f1-micro
 IMAGE_FAMILY=debian-8
 IMAGE_PROJECT=debian-cloud
 STARTUP_SCRIPT=startup-script.sh
