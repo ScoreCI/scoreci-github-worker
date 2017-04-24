@@ -25,14 +25,9 @@ var config = function () {
 	    port: process.env.PORT || 8080,
 	    
 	    nodeEnv: process.env.NODE_ENV || 'your-environment',
-	    
+
+	    projectId: process.env.GCLOUD_PROJECT || 'your-project-id',
 		credential: process.env.GCLOUD_KEY_FILENAME || 'your-project-credential',
-		
-		
-		// This is the id of your project in the Google Developers Console.
-		gcloud: {
-			projectId: process.env.GCLOUD_PROJECT || 'your-project-id'
-		},
 
 		// Topic and subscription for pub sub
 		pubsub: {
@@ -42,11 +37,6 @@ var config = function () {
 	};
 }();
 
-var projectId = config.gcloud.projectId;
-if (!projectId || projectId === 'your-project-id') {
-	throw new Error('You must set the GCLOUD_PROJECT env var or add your project id to config.js!');
-}
-
 var nodeEnv = config.nodeEnv;
 if(!nodeEnv || nodeEnv === 'your-environment'){
 	throw new Error('You must set the NODE_ENV env var or add your node env to config.js!');
@@ -55,15 +45,20 @@ if(!nodeEnv || nodeEnv === 'your-environment'){
 	config.prodEnv = process.env.NODE_ENV === 'production' ? true : false;
 }
 
+// https://github.com/GoogleCloudPlatform/google-cloud-node
 var prodEnv = config.prodEnv;
 if(!prodEnv){
-	var credential = config.credential;
+	var projectId = config.projectId;
+    if (!projectId || projectId === 'your-project-id') {
+    	throw new Error('You must set the GCLOUD_PROJECT env var or add your project id to config.js!');
+    }
+    var credential = config.credential;
 	if(!credential || credential === 'your-project-credential'){
 		throw new Error('You must set the GCLOUD_KEY_FILENAME env var or add your credential filename to config.js!');
-	}else{
-		//Add credential to gcloud config
-		config.gcloud.keyFilename = credential;
 	}
+    //Add credential to gcloud config
+    config.gcloud.projectId = projectId;
+    config.gcloud.keyFilename = credential;
 	
 }
 

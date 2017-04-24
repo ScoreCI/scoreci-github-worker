@@ -29,7 +29,8 @@ ZONE=us-central1-f
 GROUP=scoreci-github-worker-group
 TEMPLATE=$GROUP-tmpl
 MACHINE_TYPE=n1-standard-1
-IMAGE=debian-8
+IMAGE_FAMILY=debian-8
+IMAGE_PROJECT=debian-cloud
 STARTUP_SCRIPT=startup-script.sh
 SCOPES="cloud-platform"
 TAGS=http-server
@@ -47,10 +48,11 @@ SERVICE=scoreci-github-worker
 # First we have to create an instance template.
 # This template will be used by the instance group
 # to create new instances.
-
+echo "Create Instance Template."
 # [START create_template]
 gcloud compute instance-templates create $TEMPLATE \
-  --image $IMAGE \
+  --image-family $IMAGE_FAMILY \
+  --image-project $IMAGE_PROJECT \
   --machine-type $MACHINE_TYPE \
   --scopes $SCOPES \
   --metadata-from-file startup-script=$STARTUP_SCRIPT \
@@ -58,7 +60,7 @@ gcloud compute instance-templates create $TEMPLATE \
 # [END create_template]
 
 # Create the managed instance group.
-
+echo "Create Managed Instance Group."
 # [START create_group]
 gcloud compute instance-groups managed \
   create $GROUP \
@@ -69,9 +71,10 @@ gcloud compute instance-groups managed \
 # [END create_group]
 
 # [START create_named_port]
+echo "Create Named Port."
 gcloud compute instance-groups managed set-named-ports \
     $GROUP \
-    --named-port http:8080 \
+    --named-ports http:8080 \
     --zone $ZONE
 # [END create_named_port]
 
@@ -96,6 +99,7 @@ gcloud compute instance-groups managed set-named-ports \
 # Note that health checks will not cause the load balancer to shutdown any instances.
 
 # [START create_health_check]
+echo "Create Health Check."
 gcloud compute http-health-checks create ah-health-check \
   --request-path /_ah/health \
   --port 8080
@@ -105,26 +109,30 @@ gcloud compute http-health-checks create ah-health-check \
 # The backend service serves as a target for load balancing.
 
 # [START create_backend_service]
+echo "Create Backend Service."
 gcloud compute backend-services create $SERVICE \
-  --http-health-check ah-health-check \
+  --http-health-checks ah-health-check \
   --port 8080
 # [END create_backend-service]
 
 # [START add_backend_service]
+echo "Add Backend Service."
 gcloud compute backend-services add-backend $SERVICE \
   --instance-group $GROUP \
-  --zone $ZONE
+  --instance-group-zone $ZONE
 # [END add_backend_service]
 
 # Create a URL map and web Proxy. The URL map will send all requests to the
 # backend service defined above.
 
 # [START create_url_map]
+echo "Create URL Map."
 gcloud compute url-maps create $SERVICE-map \
   --default-service $SERVICE
 # [END create_url_map]
 
 # [START create_http_proxy]
+echo "Create HTTP Proxy."
 gcloud compute target-http-proxies create $SERVICE-proxy \
   --url-map $SERVICE-map
 # [END create_http_proxy]
@@ -132,16 +140,18 @@ gcloud compute target-http-proxies create $SERVICE-proxy \
 # Create a global forwarding rule to send all traffic to our proxy
 
 # [START create_forwarding_rule]
+echo "Create Forwarding Rule."
 gcloud compute forwarding-rules create $SERVICE-http-rule \
   --global \
   --target-http-proxy $SERVICE-proxy \
-  --port-range 80
+  --ports 80
 # [END create_forwarding_rule]
 
 #
 # Autoscaler configuration
 #
 # [START set_autoscaling]
+echo "Set autoscaling."
 gcloud compute instance-groups managed set-autoscaling \
   $GROUP \
   --max-num-replicas $MAX_INSTANCES \
@@ -150,9 +160,11 @@ gcloud compute instance-groups managed set-autoscaling \
 # [END set_autoscaling]
 
 # [START create_firewall]
+echo "Create Firewall Rules."
 gcloud compute firewall-rules create default-allow-http-8080 \
     --allow tcp:8080 \
     --source-ranges 0.0.0.0/0 \
     --target-tags http-server \
     --description "Allow port 8080 access to http-server"
 # [END create_firewall]
+echo "Done."
